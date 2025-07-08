@@ -1,14 +1,13 @@
-// .devcontainer/devcontainer.json
 {
-  "name": "OpenCampusExhibit2",
+  "name": "ai-video-dev",
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile"
   },
-  "runArgs": [ "--platform=linux/amd64" ],
   "customizations": {
     "vscode": {
       "extensions": ["ms-python.python"]
     }
-  }
+  },
+  "postCreateCommand": "bash scripts/download_weights.sh"
 }

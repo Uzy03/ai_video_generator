@@ -10,6 +10,9 @@ RUN apt-get update && \
 # ... 既存のベースイメージ指定など
 WORKDIR /workspace
 
+# 1) まず torch と torchvision を先に入れる
+RUN pip install --no-cache-dir torch torchvision
+
 # リポジトリをクローン済みとする
 RUN git clone https://github.com/Wan-Video/Wan2.1.git \
     && git clone https://github.com/tencent/HunyuanVideo-I2V.git

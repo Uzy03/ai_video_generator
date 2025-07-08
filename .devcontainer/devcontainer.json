@@ -1,0 +1,5 @@
+{
+  "name": "ai_video_generator",
+  "dockerFile": "Dockerfile",
+  "extensions": ["ms-python.python"]
+}

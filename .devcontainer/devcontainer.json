@@ -1,18 +1,14 @@
+// .devcontainer/devcontainer.json
 {
-  "name": "ai_video_generator",
+  "name": "OpenCampusExhibit2",
   "build": {
     "context": "..",
     "dockerfile": "Dockerfile"
   },
+  "runArgs": [ "--platform=linux/amd64" ],
   "customizations": {
     "vscode": {
-      "extensions": [
-        "ms-python.python"
-      ]
+      "extensions": ["ms-python.python"]
     }
-  },
-  "postCreateCommand": [
-    "git clone https://github.com/Wan-Video/Wan2.1.git /workspace/Wan2.1",
-    "git clone https://github.com/tencent/HunyuanVideo-I2V.git /workspace/HunyuanVideo-I2V"
-  ]
+  }
 }

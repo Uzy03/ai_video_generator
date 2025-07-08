@@ -1,4 +1,7 @@
 # app/quick_demo.py
+import sys, os
+# app/quick_demo.py の親ディレクトリ（プロジェクトルート）を path に追加
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
 from processing.pipeline import process_frame  # 既存のフレーム処理関数

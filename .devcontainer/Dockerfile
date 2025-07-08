@@ -16,6 +16,15 @@ RUN pip install --no-cache-dir torch torchvision
 # .devcontainer/Dockerfile
 FROM pytorch/pytorch:2.6.0-cuda12.6-cudnn9-devel
 
+# 必要なOSパッケージ群を入れる
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      git \
+      ffmpeg \
+      libgl1-mesa-glx \
+      build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
 
 # リポジトリをクローン済みとする
 RUN git clone https://github.com/Wan-Video/Wan2.1.git \

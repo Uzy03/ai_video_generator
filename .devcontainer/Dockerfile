@@ -10,14 +10,13 @@ RUN apt-get update && \
 # ... 既存のベースイメージ指定など
 WORKDIR /workspace
 
-# Qiita サンプルをまとめてクローン
+# リポジトリをクローン済みとする
 RUN git clone https://github.com/Wan-Video/Wan2.1.git \
     && git clone https://github.com/tencent/HunyuanVideo-I2V.git
 
-# requirements.txt がそれぞれのリポにあるなら一括インストール
-RUN pip install -r Wan2.1/requirements.txt \
-    && pip install -r HunyuanVideo-I2V/requirements.txt
+# flash-attn を含むセットアップの前に packaging を入れる
+RUN pip install --no-cache-dir packaging
 
-RUN apt-get update && \
-    apt-get install -y libgl1-mesa-glx && \
-    pip install --no-cache-dir -r requirements.txt
+# その後で各リポジトリの requirements をまとめて入れる
+RUN pip install --no-cache-dir -r Wan2.1/requirements.txt \
+    && pip install --no-cache-dir -r HunyuanVideo-I2V/requirements.txt

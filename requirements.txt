@@ -6,3 +6,4 @@ numpy
 gdown         # 重みDL用
 huggingface_hub[cli]   # モデル重みダウンロード用
 ffmpeg-python          # 動画入出力用
+torch>=2.0.1

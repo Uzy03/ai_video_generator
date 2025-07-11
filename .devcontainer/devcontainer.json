@@ -1,13 +1,22 @@
 {
   "name": "ai-video-dev",
-  "build": {
-    "context": "..",
-    "dockerfile": "Dockerfile"
-  },
-  "customizations": {
-    "vscode": {
-      "extensions": ["ms-python.python"]
+
+  // ★ CUDA 版でなく “普通の” Python イメージを指定
+  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+
+  // ★ GPU をパススルー
+  "runArgs": ["--gpus", "all"],
+
+  // ★ NVIDIA ドライバ互換ライブラリを注入する公式 Feature
+  "features": {
+    "ghcr.io/devcontainers/features/nvidia-cuda:1": {
+      // サーバ側ドライバが 535.x & CUDA 12.2 なのでそろえる
+      "version": "12.2"
     }
   },
-  "postCreateCommand": "bash scripts/download_weights.sh"
+
+  "postCreateCommand": "bash scripts/setup_repo.sh",
+  "customizations": {
+    "vscode": { "extensions": ["ms-python.python"] }
+  }
 }

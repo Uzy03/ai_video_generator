@@ -1,60 +1,61 @@
 # app/quick_demo.py
-import sys, os
-# app/quick_demo.py の親ディレクトリ（プロジェクトルート）を path に追加
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import streamlit as st
-from processing.pipeline import process_frame  # 既存のフレーム処理関数
-import numpy as np
-import cv2
-from PIL import Image
-import io
+import subprocess, tempfile, os
 
-st.set_page_config(
-    page_title="🎨 AI Video Generator — Image Upload Demo",
-    layout="centered"
-)
-st.title("🎨 AI Video Generator — Upload & Process")
+st.set_page_config("Image→Video Demo", layout="centered")
+st.title("🎬 AI Image→Video Generator")
 
-# 画像アップロード UI
-uploaded = st.file_uploader(
-    label="Upload an image",
-    type=["jpg", "jpeg", "png"]
-)
+# 1) 画像アップロード と プロンプト入力
+uploaded = st.file_uploader("Upload image", type=["jpg","png","jpeg"])
+prompt   = st.text_input("Prompt", "A young girl bravely and beautifully swings a sword.")
+model    = st.selectbox("Model", ["Wan2.1 (I2V-14B)", "HunyuanVideo-I2V"])
 
-if uploaded is not None:
-    # 1) アップロードファイル → バイト列
-    img_bytes = uploaded.read()
+if st.button("Generate Video") and uploaded:
+    # 一時ファイルに保存
+    tmp_img = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+    tmp_img.write(uploaded.read())
+    tmp_img.flush()
 
-    # 2) 既存の処理関数に渡す（bytes → bytes）
+    # 出力先ディレクトリ
+    out_dir = tempfile.mkdtemp()
+    st.info("Generating… この処理には数分かかる場合があります")
+
+    # 2) モデルごとに CLI コマンドを構築
+    if model.startswith("Wan2.1"):
+        cmd = [
+            "python", "external/Wan2.1/generate.py",
+            "--task",     "i2v-14B",
+            "--size",     "1280*720",
+            "--ckpt_dir", "external/Wan2.1/Wan2.1-I2V-14B-720P",
+            "--image",    tmp_img.name,
+            "--prompt",   prompt,
+            "--save-path", os.path.join(out_dir, "wan2.1.mp4")
+        ]
+    else:
+        cmd = [
+            "python", "external/HunyuanVideo-I2V/sample_image2video.py",
+            "--i2v-mode",
+            "--i2v-image-path", tmp_img.name,
+            "--model",          "HYVideo-T/2",
+            "--prompt",         prompt,
+            "--ckpts",          "external/HunyuanVideo-I2V/ckpts",
+            "--save-path",      os.path.join(out_dir, "hunyuan.mp4"),
+        ]
+
+    # 3) サブプロセス実行
     try:
-        out_bytes = process_frame(img_bytes)
-    except Exception as e:
-        st.error(f"処理中にエラーが発生しました: {e}")
+        subprocess.run(cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        st.error(f"生成中にエラー発生: {e}")
         st.stop()
 
-    # 3) 返ってきた JPEG bytes → NumPy (BGR)
-    arr_bgr = cv2.imdecode(
-        np.frombuffer(out_bytes, np.uint8),
-        cv2.IMREAD_COLOR
-    )
-
-    # 4) BGR → RGB に変換し、PIL Image にする
-    arr_rgb = cv2.cvtColor(arr_bgr, cv2.COLOR_BGR2RGB)
-    result_img = Image.fromarray(arr_rgb)
-
-    # 5) 結果表示
-    st.image(result_img, caption="Processed Image", use_column_width=True)
-
-    # 6) ダウンロードボタン（任意）
-    buf = io.BytesIO()
-    result_img.save(buf, format="JPEG")
-    buf.seek(0)
-    st.download_button(
-        label="Download Processed Image",
-        data=buf,
-        file_name="processed.jpg",
-        mime="image/jpeg"
-    )
-else:
-    st.info("上のボタンから画像（jpg/png）をアップロードしてください。")
+    # 4) 出力動画を表示＆ダウンロード
+    video_files = [f for f in os.listdir(out_dir) if f.endswith(".mp4")]
+    if video_files:
+        path = os.path.join(out_dir, video_files[0])
+        st.video(path)
+        with open(path, "rb") as f:
+            st.download_button("Download Video", f.read(), file_name=video_files[0], mime="video/mp4")
+    else:
+        st.error("動画ファイルが見つかりませんでした。")

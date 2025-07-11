@@ -2,6 +2,7 @@
 
 import streamlit as st
 import subprocess, tempfile, os
+import textwrap
 
 st.set_page_config("Image→Video Demo", layout="centered")
 st.title("🎬 AI Image→Video Generator")
@@ -44,11 +45,24 @@ if st.button("Generate Video") and uploaded:
         ]
 
     # 3) サブプロセス実行
+
     try:
-        subprocess.run(cmd, check=True)
+        res = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+            env={  # Wan2.1 の内部 import が通るよう PYTHONPATH を付与
+                **os.environ,
+                "PYTHONPATH": os.path.abspath("external/Wan2.1")
+            }
+        )
     except subprocess.CalledProcessError as e:
-        st.error(f"生成中にエラー発生: {e}")
+        st.error("=== STDOUT ===\n" + textwrap.shorten(e.stdout, 10000))
+        st.error("=== STDERR ===\n" + textwrap.shorten(e.stderr, 10000))
         st.stop()
+
 
     # 4) 出力動画を表示＆ダウンロード
     video_files = [f for f in os.listdir(out_dir) if f.endswith(".mp4")]

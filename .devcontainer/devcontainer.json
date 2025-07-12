@@ -19,7 +19,8 @@
   // ----------------------------------------
   "features": {
     "ghcr.io/devcontainers/features/nvidia-cuda:1": {
-      "version": "12.2.2-devel"
+      "version": "12.2.2-devel",
+      "install": "toolkit"
     }
   },
 

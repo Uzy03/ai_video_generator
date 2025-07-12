@@ -14,6 +14,9 @@ FROM ${BASE_IMAGE}
 #        ffmpeg libgl1-mesa-glx build-essential git && \
 #    rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && \
+    apt-get install -y cuda-toolkit-12-2
+
 #####################################################################
 # ❸ ワークスペースに移動
 #####################################################################

@@ -1,9 +1,9 @@
 streamlit>=1.32
 streamlit-webrtc>=0.50.0
-opencv-python
+#opencv-python
 av            # PyAV
-numpy
+#numpy
 gdown         # 重みDL用
 huggingface_hub[cli]   # モデル重みダウンロード用
 ffmpeg-python          # 動画入出力用
-torch>=2.0.1
+#torch>=2.0.1

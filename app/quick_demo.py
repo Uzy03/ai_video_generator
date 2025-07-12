@@ -3,6 +3,7 @@
 import streamlit as st
 import subprocess, tempfile, os
 import textwrap
+from PIL import Image
 
 st.set_page_config("Image→Video Demo", layout="centered")
 st.title("🎬 AI Image→Video Generator")
@@ -24,15 +25,19 @@ if st.button("Generate Video") and uploaded:
 
     # 2) モデルごとに CLI コマンドを構築
     if model.startswith("Wan2.1"):
+        w, h = Image.open(tmp_img.name).size
+        size = "1280*720" if w >= h else "720*1280"    # ★ 星を入れる
+
         cmd = [
             "python", "external/Wan2.1/generate.py",
-            "--task",     "i2v-14B",
-            "--size",     "1280*720",
-            "--ckpt_dir", "external/Wan2.1/Wan2.1-I2V-14B-720P",
-            "--image",    tmp_img.name,
-            "--prompt",   prompt,
-            "--save-path", os.path.join(out_dir, "wan2.1.mp4")
+            "--task",      "i2v-14B",
+            "--size",      size,                       # ← ★ ここ
+            "--ckpt_dir",  "external/Wan2.1/Wan2.1-I2V-14B-720P",
+            "--image",     tmp_img.name,
+            "--prompt",    prompt,
+            "--save_file", os.path.join(out_dir, "wan2.1.mp4")
         ]
+
     else:
         cmd = [
             "python", "external/HunyuanVideo-I2V/sample_image2video.py",
@@ -43,6 +48,9 @@ if st.button("Generate Video") and uploaded:
             "--ckpts",          "external/HunyuanVideo-I2V/ckpts",
             "--save-path",      os.path.join(out_dir, "hunyuan.mp4"),
         ]
+    
+    print("DEBUG CMD:", " ".join(cmd))   # ← 追加
+
 
     # 3) サブプロセス実行
 

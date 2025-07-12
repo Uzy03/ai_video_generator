@@ -1,22 +1,39 @@
 {
   "name": "ai-video-dev",
 
-  // ★ CUDA 版でなく “普通の” Python イメージを指定
-  "image": "mcr.microsoft.com/devcontainers/python:3.11-bookworm",
+  // ----------------------------------------
+  // 1. Dockerfile をビルドに使う
+  // ----------------------------------------
+  "build": {
+    "dockerfile": "Dockerfile"      // ← .devcontainer/Dockerfile の相対パス
+  },
 
-  // ★ GPU をパススルー
+  // ----------------------------------------
+  // 2. GPU をコンテナへ渡す
+  // ----------------------------------------
   "runArgs": ["--gpus", "all"],
 
-  // ★ NVIDIA ドライバ互換ライブラリを注入する公式 Feature
+  // ----------------------------------------
+  // 3. ホスト GPU ドライバ互換ライブラリを注入
+  //    （サーバ側 535 系ドライバ → CUDA 12.2）
+  // ----------------------------------------
   "features": {
     "ghcr.io/devcontainers/features/nvidia-cuda:1": {
-      // サーバ側ドライバが 535.x & CUDA 12.2 なのでそろえる
-      "version": "12.2"
+      "version": "12.2.2-devel"
     }
   },
 
+  // ----------------------------------------
+  // 4. コンテナ作成後に依存を入れるスクリプト
+  // ----------------------------------------
   "postCreateCommand": "bash scripts/setup_repo.sh",
+
+  // ----------------------------------------
+  // 5. VS Code 拡張など
+  // ----------------------------------------
   "customizations": {
-    "vscode": { "extensions": ["ms-python.python"] }
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    }
   }
 }

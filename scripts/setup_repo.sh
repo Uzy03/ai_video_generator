@@ -16,6 +16,8 @@ huggingface-cli download Wan-AI/Wan2.1-I2V-14B-720P \
 huggingface-cli download tencent/HunyuanVideo-I2V \
     --local-dir ./HunyuanVideo-I2V/ckpts
 
+cd ..
+
 pip install -r requirements.txt
 pip install -r external/HunyuanVideo-I2V/requirements.txt
 

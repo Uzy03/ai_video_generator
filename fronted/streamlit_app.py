@@ -1,6 +1,7 @@
 import streamlit as st
 from websocket import create_connection
 import cv2
+import numpy as np
 
 ws = create_connection("ws://localhost:8000/ws")
 cap = cv2.VideoCapture(0)

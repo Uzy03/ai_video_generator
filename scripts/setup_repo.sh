@@ -8,6 +8,15 @@ git clone https://github.com/Wan-Video/Wan2.1.git
 # HunyuanVideo-I2V
 git clone https://github.com/tencent/HunyuanVideo-I2V.git
 
+# LTX-Video
+git clone https://github.com/LTX-Video/LTX-Video.git
+
+# CogVideoX-2B
+git clone https://github.com/THUDM/CogVideoX.git
+
+# SkyReels
+git clone https://github.com/SkyWorkshops/SkyReels.git
+
 # Wan2.1 の 14B モデル
 huggingface-cli download Wan-AI/Wan2.1-I2V-14B-720P \
     --local-dir ./Wan2.1/Wan2.1-I2V-14B-720P

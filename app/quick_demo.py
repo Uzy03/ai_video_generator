@@ -42,6 +42,11 @@ with col2:
         [
             "Wan2.1 (I2V‑14B)",
             "HunyuanVideo‑I2V",
+            "LTX-Video (LTXV-2B)",
+            "CogVideoX-2B",
+            "Stable Video Diffusion",
+            "SkyReels GGUF",
+            "Wan2.1 GGUF",
         ],
     )
 
@@ -105,6 +110,7 @@ with st.status("⏳ Setting up…"):
 # -----------------------------------------------------------------------------
 # 5)  Build command line
 # -----------------------------------------------------------------------------
+run_subprocess = True
 if model.startswith("Wan2.1"):
     # Heuristic: choose landscape / portrait preset when user kept default
     if resolution in {"1280*720", "720*1280"}:
@@ -140,7 +146,7 @@ if model.startswith("Wan2.1"):
         "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
     }
 
-else:  # HunyuanVideo‑I2V
+elif model.startswith("HunyuanVideo"):  # HunyuanVideo‑I2V
     cmd = [
         "python", "external/HunyuanVideo-I2V/sample_image2video.py",
         "--i2v-mode",
@@ -155,19 +161,93 @@ else:  # HunyuanVideo‑I2V
     ]
     extra_env = {}
 
+elif model.startswith("LTX-Video"):
+    cmd = [
+        "python", "external/LTX-Video/inference.py",
+        "--image", tmp_img_file.name,
+        "--frames", str(frame_num),
+        "--steps", str(sample_steps),
+        "--cfg-scale", str(guide_scale),
+        "--output", str(output_dir / "ltx.mp4"),
+    ]
+    extra_env = {}
+
+elif model.startswith("CogVideoX"):
+    cmd = [
+        "python", "external/CogVideoX/demo.py",
+        "--i2v",
+        "--image", tmp_img_file.name,
+        "--output", str(output_dir / "cogvideo.mp4"),
+        "--frame-num", str(frame_num),
+        "--steps", str(sample_steps),
+        "--scale", str(guide_scale),
+    ]
+    extra_env = {}
+
+elif model.startswith("Stable Video Diffusion"):
+    cmd = ["python", "-c", "stable_video_diffusion"]
+    extra_env = {}
+    from processing.svd_pipeline import generate_svd
+    generate_svd(
+        tmp_img_file.name,
+        output_dir / "svd.mp4",
+        frame_num,
+        sample_steps,
+        guide_scale,
+    )
+    run_subprocess = False
+    proc = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+
+elif model.startswith("SkyReels"):
+    cmd = [
+        "python", "external/SkyReels/infer.py",
+        "--image", tmp_img_file.name,
+        "--frames", str(frame_num),
+        "--steps", str(sample_steps),
+        "--output", str(output_dir / "skyreels.mp4"),
+    ]
+    extra_env = {}
+
+elif model.startswith("Wan2.1 GGUF"):
+    cmd = [
+        "python", "external/Wan2.1/generate.py",
+        "--task", "i2v-14B",
+        "--size", resolution,
+        "--frame_num", str(frame_num),
+        "--sample_steps", str(sample_steps),
+        "--sample_guide_scale", str(guide_scale),
+        "--ckpt_dir", "external/Wan2.1/Wan2.1-I2V-14B-720P",
+        "--image", tmp_img_file.name,
+        "--prompt", prompt,
+        "--save_file", str(output_dir / "wan2.1-gguf.mp4"),
+        "--offload_model", "True",
+        "--gguf",
+    ]
+    if t5_cpu:
+        cmd.append("--t5_cpu")
+
+    extra_env = {
+        "PYTHONPATH": os.path.abspath("external/Wan2.1"),
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+    }
+
 st.code("$ " + " ".join(cmd), language="bash")
 
 # -----------------------------------------------------------------------------
 # 6)  Run subprocess and stream logs
 # -----------------------------------------------------------------------------
 with st.status("🖥️  Running model… this can take a few minutes."):
-    proc = subprocess.run(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        env={**os.environ, **extra_env},
-    )
+    if run_subprocess:
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            env={**os.environ, **extra_env},
+        )
+    else:
+        # The pipeline was executed directly in Python
+        pass
 
 if proc.returncode != 0:
     st.error("**Generation failed**. See logs below:")

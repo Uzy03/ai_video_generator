@@ -2,3 +2,9 @@ __pycache__/
 external/HunyuanVideo-I2V/ckpts/
 external/Wan2.1/Wan2.1-I2V-14B-720P/
 .DS_Store
+# New lightweight models and caches
+external/LTX-Video/
+external/CogVideoX/
+external/SkyReels/
+external/Wan2.1/Wan2.1-I2V-14B-720P-GGUF/
+weights/

@@ -147,10 +147,10 @@ else:  # HunyuanVideo‑I2V
         "--i2v-image-path", tmp_img_file.name,
         "--model", "HYVideo-T/2",
         "--prompt", prompt,
-        "--ckpts", "external/HunyuanVideo-I2V/ckpts",
+        "--model-base", "external/HunyuanVideo-I2V/ckpts",
         "--save-path", str(output_dir / "hunyuan.mp4"),
-        "--frame-num", str(frame_num),
-        "--sample-steps", str(sample_steps),
+        "--video-length", str(frame_num),
+        "--infer-steps", str(sample_steps),
         "--cfg-scale", str(guide_scale),
     ]
     extra_env = {}

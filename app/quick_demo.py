@@ -1,7 +1,10 @@
 # app/quick_demo.py
-"""Streamlit front‑end for Wan2.1 / HunyuanVideo image→video pipelines.
-Adds support for the lightweight **Wan 2.1 I2V‑1.3B** checkpoint so that
-users on 24–32 GB GPUs can fall back when the full 14 B model does not fit.
+"""
+Streamlit front‑end for Wan2.1 / HunyuanVideo image→video pipelines.
+This demo currently targets the official **Wan 2.1 I2V‑14B** checkpoint.
+Support for the smaller 1.3 B variant was planned but the upstream
+`generate.py` script does not recognise the ``i2v-1.3B`` task.  Until the
+upstream tool adds this option we default to the 14 B model only.
 """
 
 from __future__ import annotations
@@ -38,7 +41,6 @@ with col2:
         "Model engine",
         [
             "Wan2.1 (I2V‑14B)",
-            "Wan2.1 (I2V‑1.3B)",  # NEW: lightweight variant
             "HunyuanVideo‑I2V",
         ],
     )
@@ -113,12 +115,8 @@ if model.startswith("Wan2.1"):
             resolution = "1280*720"
 
     # Select task & checkpoint according to the variant
-    if "1.3B" in model:
-        task = "i2v-1.3B"
-        ckpt_dir = "external/Wan2.1/Wan2.1-I2V-1.3B-720P"  # <-- ensure weights here
-    else:
-        task = "i2v-14B"
-        ckpt_dir = "external/Wan2.1/Wan2.1-I2V-14B-720P"
+    task = "i2v-14B"
+    ckpt_dir = "external/Wan2.1/Wan2.1-I2V-14B-720P"
 
     cmd = [
         "python", "external/Wan2.1/generate.py",
@@ -137,7 +135,10 @@ if model.startswith("Wan2.1"):
     if t5_cpu:
         cmd.append("--t5_cpu")
 
-    extra_env = {"PYTHONPATH": os.path.abspath("external/Wan2.1")}
+    extra_env = {
+        "PYTHONPATH": os.path.abspath("external/Wan2.1"),
+        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+    }
 
 else:  # HunyuanVideo‑I2V
     cmd = [

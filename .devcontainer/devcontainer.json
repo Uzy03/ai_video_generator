@@ -1,40 +1,14 @@
 {
   "name": "ai-video-dev",
-
-  // ----------------------------------------
-  // 1. Dockerfile をビルドに使う
-  // ----------------------------------------
-  "build": {
-    "dockerfile": "Dockerfile"      // ← .devcontainer/Dockerfile の相対パス
-  },
-
-  // ----------------------------------------
-  // 2. GPU をコンテナへ渡す
-  // ----------------------------------------
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
   "runArgs": ["--gpus", "all"],
 
-  // ----------------------------------------
-  // 3. ホスト GPU ドライバ互換ライブラリを注入
-  //    （サーバ側 535 系ドライバ → CUDA 12.2）
-  // ----------------------------------------
   "features": {
+    // devel/toolkit は不要。runtime だけに戻す方が安定
     "ghcr.io/devcontainers/features/nvidia-cuda:1": {
-      "version": "12.2.2-devel",
-      "install": "toolkit"
+      "version": "12.2"
     }
   },
 
-  // ----------------------------------------
-  // 4. コンテナ作成後に依存を入れるスクリプト
-  // ----------------------------------------
-  "postCreateCommand": "bash scripts/setup_repo.sh",
-
-  // ----------------------------------------
-  // 5. VS Code 拡張など
-  // ----------------------------------------
-  "customizations": {
-    "vscode": {
-      "extensions": ["ms-python.python"]
-    }
-  }
+  "postCreateCommand": "bash scripts/setup_repo.sh"
 }

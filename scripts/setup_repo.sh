@@ -1,36 +1,49 @@
-# プロジェクトルートで
-mkdir -p external
-cd external
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Wan2.1
-git clone https://github.com/Wan-Video/Wan2.1.git
+# --- paths ---
+ROOT=$(pwd)
+EXT=$ROOT/external
+WEIGHTS=$EXT/weights
 
-# HunyuanVideo-I2V
-git clone https://github.com/tencent/HunyuanVideo-I2V.git
+mkdir -p "$EXT" "$WEIGHTS"
+cd  "$EXT"
 
-# LTX-Video
-git clone https://github.com/LTX-Video/LTX-Video.git
+# ---------- Git repos ----------
+git clone https://github.com/Wan-Video/Wan2.1.git            || true
+git clone https://github.com/Tencent-Hunyuan/HunyuanVideo-I2V.git || true
+git clone https://github.com/Lightricks/LTX-Video.git        || true
+git clone https://github.com/THUDM/CogVideo.git              || true
+git clone https://github.com/SkyworkAI/SkyReels-V2.git       || true
 
-# CogVideoX-2B
-git clone https://github.com/THUDM/CogVideoX.git
+# ---------- HF weights ----------
+# ※ 事前に:  huggingface-cli login  （トークン）＋各モデルページで「Agree and access」クリック
 
-# SkyReels
-git clone https://github.com/SkyWorkshops/SkyReels.git
-
-# Wan2.1 の 14B モデル
+# Wan 2.1 (14B, FP16 safetensors)
 huggingface-cli download Wan-AI/Wan2.1-I2V-14B-720P \
-    --local-dir ./Wan2.1/Wan2.1-I2V-14B-720P
+    --local-dir "$WEIGHTS/Wan2.1-I2V-14B-720P" --local-dir-use-symlinks False
 
 # HunyuanVideo-I2V
 huggingface-cli download tencent/HunyuanVideo-I2V \
-    --local-dir ./HunyuanVideo-I2V/ckpts
+    --local-dir "$WEIGHTS/HunyuanVideo-I2V" --local-dir-use-symlinks False
 
-cd ..
+# LTX-Video distilled 2B
+huggingface-cli download Lightricks/LTX-Video-0.9.7-distilled \
+    --local-dir "$WEIGHTS/LTX-Video-2B" --local-dir-use-symlinks False
 
+# CogVideoX-2B (I2V)
+huggingface-cli download THUDM/CogVideoX-2b \
+    --local-dir "$WEIGHTS/CogVideoX-2B" --local-dir-use-symlinks False
+
+# SkyReels-V2 I2V 14B 720P
+huggingface-cli download Skywork/SkyReels-V2-I2V-14B-720P \
+    --local-dir "$WEIGHTS/SkyReels-V2-14B" --local-dir-use-symlinks False
+
+cd "$ROOT"
+
+# ---------- Python deps ----------
 pip install -r requirements.txt
 pip install -r external/HunyuanVideo-I2V/requirements.txt
+grep -v '^flash_attn' external/Wan2.1/requirements.txt | pip install -r /dev/stdin
 
-tmp_req=$(mktemp)
-grep -v '^flash_attn' external/Wan2.1/requirements.txt > "$tmp_req"
-pip install -r "$tmp_req"
-rm "$tmp_req"
+echo "✅ All repos and weights fetched."

@@ -28,8 +28,21 @@ huggingface-cli download tencent/HunyuanVideo-I2V \
     --local-dir "$WEIGHTS/HunyuanVideo-I2V" --local-dir-use-symlinks False
 
 # LTX-Video distilled 2B
-huggingface-cli download Lightricks/LTX-Video-0.9.7-distilled \
-    --local-dir "$WEIGHTS/LTX-Video-2B" --local-dir-use-symlinks False
+#huggingface-cli download Lightricks/LTX-Video-0.9.6-distilled \
+#    --local-dir "$WEIGHTS/LTX-Video-2B" --local-dir-use-symlinks False
+
+# --- LTX-Video distilled 2B (0.9.6) ---
+#huggingface-cli download Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25 \
+#  --resume-download \
+#  --local-dir "$WEIGHTS/LTX-Video-2B" \
+#  --local-dir-use-symlinks False
+
+cd weights
+git lfs install
+GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/Lightricks/LTX-Video LTX-Video-2B
+cd LTX-Video-2B
+git lfs pull --include "ltxv-2b-0.9.6-distilled-04-25.safetensors"
+cd ..
 
 # CogVideoX-2B (I2V)
 huggingface-cli download THUDM/CogVideoX-2b \

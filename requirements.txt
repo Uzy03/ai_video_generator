@@ -10,3 +10,5 @@ diffusers
 transformers
 accelerate
 # torch>=2.0.1
+sentencepiece
+timm

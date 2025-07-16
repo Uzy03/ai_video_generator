@@ -18,6 +18,8 @@ from pathlib import Path
 import streamlit as st
 from PIL import Image
 
+WEIGHTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../external/weights"))
+
 # -----------------------------------------------------------------------------
 # 0)  Streamlit page settings
 # -----------------------------------------------------------------------------
@@ -102,7 +104,13 @@ if not run_btn:
 # -----------------------------------------------------------------------------
 with st.status("⏳ Setting up…"):
     tmp_img_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-    tmp_img_file.write(uploaded_img.read())
+    if model.startswith("LTX-Video"):
+        # LTX-Video用: 必ずRGBで保存
+        img = Image.open(uploaded_img).convert("RGB")
+        img.save(tmp_img_file, format="JPEG")
+    else:
+        # 他モデルはそのまま保存
+        tmp_img_file.write(uploaded_img.read())
     tmp_img_file.flush()
 
     output_dir = Path(tempfile.mkdtemp())
@@ -111,19 +119,10 @@ with st.status("⏳ Setting up…"):
 # 5)  Build command line
 # -----------------------------------------------------------------------------
 run_subprocess = True
+
 if model.startswith("Wan2.1"):
-    # Heuristic: choose landscape / portrait preset when user kept default
-    if resolution in {"1280*720", "720*1280"}:
-        w, h = Image.open(tmp_img_file.name).size
-        if h > w:
-            resolution = "720*1280"
-        else:
-            resolution = "1280*720"
-
-    # Select task & checkpoint according to the variant
     task = "i2v-14B"
-    ckpt_dir = "external/Wan2.1/Wan2.1-I2V-14B-720P"
-
+    ckpt_dir = os.path.join(WEIGHTS_DIR, "Wan2.1-I2V-14B-720P")
     cmd = [
         "python", "external/Wan2.1/generate.py",
         "--task", task,
@@ -137,105 +136,62 @@ if model.startswith("Wan2.1"):
         "--prompt", prompt,
         "--save_file", str(output_dir / "wan2.1.mp4"),
         "--offload_model", "True",
+        "--t5_cpu",
     ]
-    if t5_cpu:
-        cmd.append("--t5_cpu")
 
-    extra_env = {
-        "PYTHONPATH": os.path.abspath("external/Wan2.1"),
-        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
-    }
-
-elif model.startswith("HunyuanVideo"):  # HunyuanVideo‑I2V
+elif model.startswith("HunyuanVideo"):
+    ckpt_dir = os.path.join(WEIGHTS_DIR, "HunyuanVideo-I2V")
     cmd = [
-        "python", "external/HunyuanVideo-I2V/sample_image2video.py",
-        "--i2v-mode",
-        "--i2v-image-path", tmp_img_file.name,
-        "--model", "HYVideo-T/2",
+        "python", "external/HunyuanVideo-I2V/inference.py",
+        "--ckpt_dir", ckpt_dir,
+        "--input_media_path", tmp_img_file.name,  # 正しい引数名に修正
         "--prompt", prompt,
-        "--model-base", "external/HunyuanVideo-I2V/ckpts",
-        "--save-path", str(output_dir / "hunyuan.mp4"),
-        "--video-length", str(frame_num),
-        "--infer-steps", str(sample_steps),
-        "--cfg-scale", str(guide_scale),
+        "--output_path", str(output_dir / "hunyuan.mp4"),  # 正しい引数名に修正
+        # 必要に応じて他の引数も追加
     ]
-    extra_env = {}
 
 elif model.startswith("LTX-Video"):
+    config_path = "external/LTX-Video/configs/ltxv-2b-0.9.1.yaml"
     cmd = [
         "python", "external/LTX-Video/inference.py",
-        "--image", tmp_img_file.name,
-        "--frames", str(frame_num),
-        "--steps", str(sample_steps),
-        "--cfg-scale", str(guide_scale),
-        "--output", str(output_dir / "ltx.mp4"),
+        "--pipeline_config", config_path,
+        "--input_media_path", tmp_img_file.name,
+        "--prompt", prompt,
+        "--output_path", str(output_dir / "ltx.mp4"),
+        # 必要に応じて他の引数も追加
     ]
-    extra_env = {}
 
 elif model.startswith("CogVideoX"):
+    ckpt_dir = os.path.join(WEIGHTS_DIR, "CogVideoX-2B")
     cmd = [
-        "python", "external/CogVideoX/demo.py",
-        "--i2v",
-        "--image", tmp_img_file.name,
-        "--output", str(output_dir / "cogvideo.mp4"),
-        "--frame-num", str(frame_num),
-        "--steps", str(sample_steps),
-        "--scale", str(guide_scale),
+        "python", "external/CogVideo/inference.py",
+        "--ckpt_dir", ckpt_dir,
+        "--input_path", tmp_img_file.name,  # 正しい引数名に修正
+        "--prompt", prompt,
+        "--output_path", str(output_dir / "cogvideo.mp4"),  # 正しい引数名に修正
+        # 必要に応じて他の引数も追加
     ]
-    extra_env = {}
-
-elif model.startswith("Stable Video Diffusion"):
-    cmd = ["python", "-c", "stable_video_diffusion"]
-    extra_env = {}
-    from processing.svd_pipeline import generate_svd
-    generate_svd(
-        tmp_img_file.name,
-        output_dir / "svd.mp4",
-        frame_num,
-        sample_steps,
-        guide_scale,
-    )
-    run_subprocess = False
-    proc = subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
 
 elif model.startswith("SkyReels"):
+    ckpt_dir = os.path.join(WEIGHTS_DIR, "SkyReels-V2-14B")
     cmd = [
-        "python", "external/SkyReels/infer.py",
-        "--image", tmp_img_file.name,
-        "--frames", str(frame_num),
-        "--steps", str(sample_steps),
-        "--output", str(output_dir / "skyreels.mp4"),
-    ]
-    extra_env = {}
-
-elif model.startswith("Wan2.1 GGUF"):
-    cmd = [
-        "python", "external/Wan2.1/generate.py",
-        "--task", "i2v-14B",
-        "--size", resolution,
-        "--frame_num", str(frame_num),
-        "--sample_steps", str(sample_steps),
-        "--sample_guide_scale", str(guide_scale),
-        "--ckpt_dir", "external/Wan2.1/Wan2.1-I2V-14B-720P",
-        "--image", tmp_img_file.name,
+        "python", "external/SkyReels-V2/inference.py",
+        "--ckpt_dir", ckpt_dir,
+        "--input_path", tmp_img_file.name,  # 正しい引数名に修正
         "--prompt", prompt,
-        "--save_file", str(output_dir / "wan2.1-gguf.mp4"),
-        "--offload_model", "True",
-        "--gguf",
+        "--output_path", str(output_dir / "skyreels.mp4"),  # 正しい引数名に修正
+        # 必要に応じて他の引数も追加
     ]
-    if t5_cpu:
-        cmd.append("--t5_cpu")
-
-    extra_env = {
-        "PYTHONPATH": os.path.abspath("external/Wan2.1"),
-        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
-    }
 
 st.code("$ " + " ".join(cmd), language="bash")
 
 # -----------------------------------------------------------------------------
 # 6)  Run subprocess and stream logs
 # -----------------------------------------------------------------------------
+extra_env = {
+    "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+}
+
 with st.status("🖥️  Running model… this can take a few minutes."):
     if run_subprocess:
         proc = subprocess.run(

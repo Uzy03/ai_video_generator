@@ -67,14 +67,9 @@ streamlit run app/quick_demo.py
 
 ## 🖼️ サンプルアセット
 
-### 入力画像
-![入力画像](sample_img/https---qiita-image-store.s3.ap-northeast-1.amazonaws.com-0-235259-92fc9bcb-49cd-4d54-b4ee-912e9da590c1.jpeg)
-
-### 生成動画
-<video src="https://raw.githubusercontent.com/Uzy03/ai_video_generator/main/sample_output/video_output_0_a-young-girl-bravely-and_171198_544x448x113_0.mp4"
-       width="320" controls loop muted>
-  お使いのブラウザは video タグをサポートしていません。
-</video>
+| 入力 | 出力(GIF) |
+|------|-----------|
+| ![入力](sample_img/https---qiita-image-store.s3.ap-northeast-1.amazonaws.com-0-235259-92fc9bcb-49cd-4d54-b4ee-912e9da590c1.jpeg) | ![出力](sample_output/demo.gif) |
 
 
 > 上記は **PixArt-Video（16 フレーム／10 FPS）** で生成した例です。モデルを変えて品質や速度を比較してみてください。

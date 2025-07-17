@@ -60,7 +60,7 @@ with st.sidebar:
 
     # --- 共通パラメータ ---
     frame_num: int = st.number_input(
-        "Frame count (8n+1)", min_value=9, max_value=81, step=8, value=17,
+        "Frame count (8n+1)", min_value=9, max_value=161, step=8, value=17,
         help="Total number of frames to synthesise. LTX-Videoは9, 17, 25, ...など8n+1を推奨。",
     )
     fps: int = st.number_input(

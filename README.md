@@ -69,7 +69,7 @@ streamlit run app/quick_demo.py
 
 | 入力 (`sample_img`) | 出力 (`sample_output`) |
 | ----------------- | -------------------- |
-| `forest.png`      | `forest.mp4`         |
+| ![girl_with_cat](sample_img/https---qiita-image-store.s3.ap-northeast-1.amazonaws.com-0-235259-92fc9bcb-49cd-4d54-b4ee-912e9da590c1.jpeg) | [▶︎ girl_with_cat.mp4](sample_output/video_output_0_a-young-girl-bravely-and_171198_544x448x113_0.mp4)       | `forest.mp4`         |
 | `city.png`        | `city.mp4`           |
 
 > 上記は **PixArt-Video（16 フレーム／10 FPS）** で生成した例です。モデルを変えて品質や速度を比較してみてください。

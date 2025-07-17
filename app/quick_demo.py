@@ -136,7 +136,7 @@ with st.status("⏳ Setting up…"):
 run_subprocess = True
 
 if model.startswith("LTX-Video"):
-    config_path = "external/LTX-Video/configs/ltxv-2b-0.9.1.yaml"
+    config_path = "external/LTX-Video/configs/ltxv-2b-0.9.6-distilled.yaml"
     cmd = [
         "python", "external/LTX-Video/inference.py",
         "--prompt", prompt,

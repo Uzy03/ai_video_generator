@@ -31,6 +31,20 @@ st.title("🎬 AI Image→Video Generator")
 # -----------------------------------------------------------------------------
 uploaded_img = st.file_uploader("Upload image", type=["jpg", "jpeg", "png"])
 
+# 画像サイズのデフォルト値を初期化
+img_default_width = 768
+img_default_height = 512
+img_info_text = ""
+if uploaded_img is not None:
+    try:
+        img = Image.open(uploaded_img)
+        w, h = img.size
+        img_default_width = min(w, 1280)
+        img_default_height = min(h, 720)
+        img_info_text = f"入力画像サイズ: {w} x {h}"
+    except Exception:
+        img_info_text = "画像サイズの取得に失敗しました"
+
 col1, col2 = st.columns(2)
 with col1:
     prompt: str = st.text_input(
@@ -42,13 +56,7 @@ with col2:
     model: str = st.selectbox(
         "Model engine",
         [
-            "Wan2.1 (I2V‑14B)",
-            "HunyuanVideo‑I2V",
             "LTX-Video (LTXV-2B)",
-            "CogVideoX-2B",
-            "Stable Video Diffusion",
-            "SkyReels GGUF",
-            "Wan2.1 GGUF",
         ],
     )
 
@@ -57,6 +65,11 @@ with col2:
 # -----------------------------------------------------------------------------
 with st.sidebar:
     st.header("⚙️ Advanced settings")
+
+    if img_info_text:
+        st.info(img_info_text)
+    st.markdown("**推奨解像度: 1216 x 704（32の倍数）/ 1280 x 720未満がベスト**")
+    st.markdown("出力サイズは32の倍数のみ選択可能です。推奨解像度ボタンで自動設定もできます。")
 
     # --- 共通パラメータ ---
     frame_num: int = st.number_input(
@@ -73,15 +86,27 @@ with st.sidebar:
     )
 
     # --- LTX-Videoや解像度指定モデルのみ ---
-    if model.startswith("LTX-Video") or model.startswith("HunyuanVideo") or model.startswith("CogVideoX") or model.startswith("SkyReels"):
-        out_height: int = st.number_input(
-            "Output height", min_value=256, max_value=1024, step=32, value=512,
-            help="出力動画の高さ（32の倍数推奨）"
-        )
-        out_width: int = st.number_input(
-            "Output width", min_value=256, max_value=2048, step=32, value=768,
-            help="出力動画の幅（32の倍数推奨）"
-        )
+    if model.startswith("LTX-Video"):
+        # 32の倍数リストを生成（256〜1280, 256〜720）
+        width_options = [i for i in range(256, 1281, 32)]
+        height_options = [i for i in range(256, 721, 32)]
+        # 推奨解像度ボタン
+        if 'set_recommended' not in st.session_state:
+            st.session_state['set_recommended'] = False
+        if st.button("推奨解像度(1216x704)に設定"):
+            st.session_state['out_width'] = 1216
+            st.session_state['out_height'] = 704
+            st.session_state['set_recommended'] = True
+        # デフォルト値の決定
+        default_width = st.session_state.get('out_width', (img_default_width // 32) * 32)
+        default_height = st.session_state.get('out_height', (img_default_height // 32) * 32)
+        # セレクトボックス
+        out_width = st.selectbox("Output width (32の倍数)", width_options, index=width_options.index(default_width) if default_width in width_options else 0)
+        out_height = st.selectbox("Output height (32の倍数)", height_options, index=height_options.index(default_height) if default_height in height_options else 0)
+        # 選択値をセッションに保存
+        st.session_state['out_width'] = out_width
+        st.session_state['out_height'] = out_height
+        st.info(f"出力サイズ: {out_width} x {out_height}")
 
     # --- Wan‑specific --------------------------------------------------------
     if model.startswith("Wan2.1"):

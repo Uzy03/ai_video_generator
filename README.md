@@ -67,9 +67,11 @@ streamlit run app/quick_demo.py
 
 ## 🖼️ サンプルアセット
 
-| 入力 | 出力(GIF) |
-|------|-----------|
-| ![入力](sample_img/https---qiita-image-store.s3.ap-northeast-1.amazonaws.com-0-235259-92fc9bcb-49cd-4d54-b4ee-912e9da590c1.jpeg) | ![出力](sample_output/demo.gif) |
+<p align="center">
+  <img src="sample_img/https---qiita-image-store.s3.ap-northeast-1.amazonaws.com-0-235259-92fc9bcb-49cd-4d54-b4ee-912e9da590c1.jpeg" width="320" alt="入力画像"/>
+  &nbsp;&nbsp;
+  <img src="sample_output/demo.gif" width="320" alt="生成GIF"/>
+</p>
 
 
 > 上記は **PixArt-Video（16 フレーム／10 FPS）** で生成した例です。モデルを変えて品質や速度を比較してみてください。

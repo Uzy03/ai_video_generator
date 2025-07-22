@@ -26,6 +26,9 @@ if [ ! -d "LTX-Video-2B" ]; then
   cd ..
 fi
 
+# ---------- MLLB (NLLB) モデルのダウンロード ----------
+bash API/download_model.sh
+
 cd "$ROOT"
 
 # ---------- Python deps ----------

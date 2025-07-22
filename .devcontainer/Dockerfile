@@ -7,7 +7,7 @@ FROM ${BASE_IMAGE}
 # OS 依存 (nvcc は要らない)
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        ffmpeg libgl1-mesa-glx build-essential git ninja-build && \
+        ffmpeg libgl1-mesa-glx build-essential git ninja-build git-lfs && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace/ai_video_generator

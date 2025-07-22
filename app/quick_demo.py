@@ -17,6 +17,9 @@ from pathlib import Path
 
 import streamlit as st
 from PIL import Image
+import requests
+import re
+import socket
 
 WEIGHTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../external/weights"))
 
@@ -25,6 +28,20 @@ WEIGHTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../extern
 # -----------------------------------------------------------------------------
 st.set_page_config(page_title="🎬 AI Image→Video Generator", layout="centered")
 st.title("🎬 AI Image→Video Generator")
+
+# MLLB APIサーバが起動していなければ自動起動
+API_HOST = "localhost"
+API_PORT = 8000
+
+def is_api_running(host, port):
+    try:
+        with socket.create_connection((host, port), timeout=2):
+            return True
+    except Exception:
+        return False
+
+if not is_api_running(API_HOST, API_PORT):
+    subprocess.Popen(["bash", "API/run_api.sh"])
 
 # -----------------------------------------------------------------------------
 # 1)  Input widgets (main area)
@@ -47,11 +64,37 @@ if uploaded_img is not None:
 
 col1, col2 = st.columns(2)
 with col1:
-    prompt: str = st.text_input(
-        "Prompt",
+    prompt_en: str = st.text_input(
+        "Prompt (Japanese OK)",
         value="A young girl bravely and beautifully swings a sword.",
-        placeholder="Describe what should appear in the video…",
+        placeholder="Enter your prompt in English or Japanese…",
     )
+    # 日本語判定用正規表現
+    def contains_japanese(text):
+        return re.search(r'[\u3040-\u30ff\u4e00-\u9fff]', text) is not None
+    # ローカルAPIで日本語→英語翻訳
+    def translate_to_en_local(text):
+        try:
+            res = requests.post(
+                "http://localhost:8000/translate",
+                json={"text": text},
+                timeout=10
+            )
+            if res.status_code == 200:
+                return res.json().get("translatedText", text)
+            else:
+                return text
+        except Exception:
+            return text
+    if prompt_en.strip():
+        if contains_japanese(prompt_en):
+            prompt_translated = translate_to_en_local(prompt_en)
+        else:
+            prompt_translated = prompt_en
+    else:
+        prompt_translated = ""
+    st.caption(f"英語訳: {prompt_translated}")
+    prompt = prompt_translated
 with col2:
     model: str = st.selectbox(
         "Model engine",
@@ -68,8 +111,6 @@ with st.sidebar:
 
     if img_info_text:
         st.info(img_info_text)
-    st.markdown("**推奨解像度: 1216 x 704（32の倍数）/ 1280 x 720未満がベスト**")
-    st.markdown("出力サイズは32の倍数のみ選択可能です。推奨解像度ボタンで自動設定もできます。")
 
     # --- 共通パラメータ ---
     frame_num: int = st.number_input(
@@ -138,135 +179,142 @@ with st.sidebar:
 # -----------------------------------------------------------------------------
 run_btn = st.button("🚀 Generate video", disabled=uploaded_img is None)
 
-if not run_btn:
-    st.stop()
+# 生成結果・エラーをセッションで管理
+if 'video_path' not in st.session_state:
+    st.session_state['video_path'] = None
+if 'video_bytes' not in st.session_state:
+    st.session_state['video_bytes'] = None
+if 'gen_error' not in st.session_state:
+    st.session_state['gen_error'] = None
 
-# -----------------------------------------------------------------------------
-# 4)  Prepare temporary paths
-# -----------------------------------------------------------------------------
-with st.status("⏳ Setting up…"):
-    tmp_img_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
-    if model.startswith("LTX-Video"):
-        img = Image.open(uploaded_img).convert("RGB")
-        img.save(tmp_img_file, format="JPEG")
-    else:
-        tmp_img_file.write(uploaded_img.read())
-    tmp_img_file.flush()
+if run_btn:
+    st.session_state['gen_error'] = None
+    try:
+        # 4)  Prepare temporary paths
+        with st.status("⏳ Setting up…"):
+            tmp_img_file = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            if model.startswith("LTX-Video"):
+                img = Image.open(uploaded_img).convert("RGB")
+                img.save(tmp_img_file, format="JPEG")
+            else:
+                tmp_img_file.write(uploaded_img.read())
+            tmp_img_file.flush()
 
-    output_dir = Path(tempfile.mkdtemp())
+            output_dir = Path(tempfile.mkdtemp())
 
-# -----------------------------------------------------------------------------
-# 5)  Build command line
-# -----------------------------------------------------------------------------
-run_subprocess = True
+        # 5)  Build command line
+        run_subprocess = True
+        if model.startswith("LTX-Video"):
+            config_path = "external/LTX-Video/configs/ltxv-2b-0.9.6-distilled.yaml"
+            cmd = [
+                "python", "external/LTX-Video/inference.py",
+                "--prompt", prompt,
+                "--conditioning_media_paths", tmp_img_file.name,
+                "--conditioning_start_frames", "0",
+                "--height", str(out_height),
+                "--width", str(out_width),
+                "--num_frames", str(frame_num),
+                "--frame_rate", str(fps),
+                "--output_path", str(output_dir / "ltx.mp4/output.mp4"),
+                "--pipeline_config", config_path,
+            ]
+            if offload_to_cpu:
+                cmd += ["--offload_to_cpu", "True"]
+            extra_env = {"PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True"}
+        elif model.startswith("Wan2.1"):
+            task = "i2v-14B"
+            ckpt_dir = os.path.join(WEIGHTS_DIR, "Wan2.1-I2V-14B-720P")
+            cmd = [
+                "python", "external/Wan2.1/generate.py",
+                "--task", task,
+                "--size", resolution,  # resolutionのみを使う
+                "--frame_num", str(frame_num),
+                "--sample_steps", str(sample_steps),
+                "--sample_guide_scale", str(guide_scale),
+                "--sample_shift", str(shift),
+                "--ckpt_dir", ckpt_dir,
+                "--image", tmp_img_file.name,
+                "--prompt", prompt,
+                "--save_file", str(output_dir / "wan2.1.mp4"),
+                "--offload_model", "True",
+                "--t5_cpu",
+            ]
+            extra_env = {}
+        elif model.startswith("HunyuanVideo"):
+            ckpt_dir = os.path.join(WEIGHTS_DIR, "HunyuanVideo-I2V")
+            cmd = [
+                "python", "external/HunyuanVideo-I2V/inference.py",
+                "--ckpt_dir", ckpt_dir,
+                "--input_media_path", tmp_img_file.name,
+                "--prompt", prompt,
+                "--output_path", str(output_dir / "hunyuan.mp4"),
+            ]
+            extra_env = {}
+        elif model.startswith("CogVideoX"):
+            ckpt_dir = os.path.join(WEIGHTS_DIR, "CogVideoX-2B")
+            cmd = [
+                "python", "external/CogVideo/inference.py",
+                "--ckpt_dir", ckpt_dir,
+                "--input_path", tmp_img_file.name,
+                "--prompt", prompt,
+                "--output_path", str(output_dir / "cogvideo.mp4"),
+            ]
+            extra_env = {}
+        elif model.startswith("SkyReels"):
+            ckpt_dir = os.path.join(WEIGHTS_DIR, "SkyReels-V2-14B")
+            cmd = [
+                "python", "external/SkyReels-V2/inference.py",
+                "--ckpt_dir", ckpt_dir,
+                "--input_path", tmp_img_file.name,
+                "--prompt", prompt,
+                "--output_path", str(output_dir / "skyreels.mp4"),
+            ]
+            extra_env = {}
 
-if model.startswith("LTX-Video"):
-    config_path = "external/LTX-Video/configs/ltxv-2b-0.9.6-distilled.yaml"
-    cmd = [
-        "python", "external/LTX-Video/inference.py",
-        "--prompt", prompt,
-        "--conditioning_media_paths", tmp_img_file.name,
-        "--conditioning_start_frames", "0",
-        "--height", str(out_height),
-        "--width", str(out_width),
-        "--num_frames", str(frame_num),
-        "--frame_rate", str(fps),
-        "--output_path", str(output_dir / "ltx.mp4/output.mp4"),
-        "--pipeline_config", config_path,
-    ]
-    if offload_to_cpu:
-        cmd += ["--offload_to_cpu", "True"]
+        st.code("$ " + " ".join(cmd), language="bash")
+        with st.status("🖥️  Running model… this can take a few minutes."):
+            if run_subprocess:
+                proc = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    env={**os.environ, **extra_env},
+                )
+            else:
+                proc = None
+        if proc is not None and proc.returncode != 0:
+            st.session_state['gen_error'] = "**Generation failed**. See logs below:"
+            st.session_state['video_path'] = None
+            st.session_state['video_bytes'] = None
+            st.session_state['gen_stdout'] = proc.stdout or "<empty>"
+            st.session_state['gen_stderr'] = proc.stderr or "<empty>"
+        else:
+            # 7)  Display result
+            video_files = [f for f in output_dir.rglob("*.mp4") if f.is_file()]
+            if not video_files:
+                st.session_state['gen_error'] = "No video file produced."
+                st.session_state['video_path'] = None
+                st.session_state['video_bytes'] = None
+            else:
+                video_path = video_files[0]
+                with video_path.open("rb") as f:
+                    video_bytes = f.read()
+                st.session_state['video_path'] = str(video_path)
+                st.session_state['video_bytes'] = video_bytes
+    except Exception as e:
+        st.session_state['gen_error'] = f"エラー: {e}"
+        st.session_state['video_path'] = None
+        st.session_state['video_bytes'] = None
 
-    extra_env = {
-        "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
-    }
+# 生成結果・エラーの表示
+if st.session_state.get('gen_error'):
+    st.error(st.session_state['gen_error'])
+    if 'gen_stdout' in st.session_state:
+        st.expander("STDOUT").write(st.session_state['gen_stdout'])
+    if 'gen_stderr' in st.session_state:
+        st.expander("STDERR").write(st.session_state['gen_stderr'])
 
-elif model.startswith("Wan2.1"):
-    task = "i2v-14B"
-    ckpt_dir = os.path.join(WEIGHTS_DIR, "Wan2.1-I2V-14B-720P")
-    cmd = [
-        "python", "external/Wan2.1/generate.py",
-        "--task", task,
-        "--size", resolution,  # resolutionのみを使う
-        "--frame_num", str(frame_num),
-        "--sample_steps", str(sample_steps),
-        "--sample_guide_scale", str(guide_scale),
-        "--sample_shift", str(shift),
-        "--ckpt_dir", ckpt_dir,
-        "--image", tmp_img_file.name,
-        "--prompt", prompt,
-        "--save_file", str(output_dir / "wan2.1.mp4"),
-        "--offload_model", "True",
-        "--t5_cpu",
-    ]
-    extra_env = {}
-
-elif model.startswith("HunyuanVideo"):
-    ckpt_dir = os.path.join(WEIGHTS_DIR, "HunyuanVideo-I2V")
-    cmd = [
-        "python", "external/HunyuanVideo-I2V/inference.py",
-        "--ckpt_dir", ckpt_dir,
-        "--input_media_path", tmp_img_file.name,
-        "--prompt", prompt,
-        "--output_path", str(output_dir / "hunyuan.mp4"),
-    ]
-    extra_env = {}
-
-elif model.startswith("CogVideoX"):
-    ckpt_dir = os.path.join(WEIGHTS_DIR, "CogVideoX-2B")
-    cmd = [
-        "python", "external/CogVideo/inference.py",
-        "--ckpt_dir", ckpt_dir,
-        "--input_path", tmp_img_file.name,
-        "--prompt", prompt,
-        "--output_path", str(output_dir / "cogvideo.mp4"),
-    ]
-    extra_env = {}
-
-elif model.startswith("SkyReels"):
-    ckpt_dir = os.path.join(WEIGHTS_DIR, "SkyReels-V2-14B")
-    cmd = [
-        "python", "external/SkyReels-V2/inference.py",
-        "--ckpt_dir", ckpt_dir,
-        "--input_path", tmp_img_file.name,
-        "--prompt", prompt,
-        "--output_path", str(output_dir / "skyreels.mp4"),
-    ]
-    extra_env = {}
-
-st.code("$ " + " ".join(cmd), language="bash")
-
-# -----------------------------------------------------------------------------
-# 6)  Run subprocess and stream logs
-# -----------------------------------------------------------------------------
-with st.status("🖥️  Running model… this can take a few minutes."):
-    if run_subprocess:
-        proc = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            env={**os.environ, **extra_env},
-        )
-    else:
-        pass
-
-if proc.returncode != 0:
-    st.error("**Generation failed**. See logs below:")
-    st.expander("STDOUT").write(proc.stdout or "<empty>")
-    st.expander("STDERR").write(proc.stderr or "<empty>")
-    st.stop()
-
-# -----------------------------------------------------------------------------
-# 7)  Display result
-# -----------------------------------------------------------------------------
-# サブディレクトリも含めてmp4ファイルのみを探す（is_file()でフィルタ）
-video_files = [f for f in output_dir.rglob("*.mp4") if f.is_file()]
-if not video_files:
-    st.error("No video file produced.")
-    st.stop()
-
-video_path = video_files[0]
-st.video(str(video_path))
-with video_path.open("rb") as f:
-    st.download_button("Download video", f.read(), file_name=video_path.name, mime="video/mp4")
+if st.session_state.get('video_path') and st.session_state.get('video_bytes'):
+    st.video(st.session_state['video_path'])
+    st.download_button("Download video", st.session_state['video_bytes'], file_name=Path(st.session_state['video_path']).name, mime="video/mp4")

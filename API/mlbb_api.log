@@ -1,0 +1,70 @@
+Device set to use cuda:0
+INFO:     Started server process [1645725]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0INFO:     127.0.0.1:42534 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49308 - "POST /translate HTTP/1.1" 200 OK
+You seem to be using the pipelines sequentially on GPU. In order to maximize efficiency please use a dataset
+INFO:     127.0.0.1:49322 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49346 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49368 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49378 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49392 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49410 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49428 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49446 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49472 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49486 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49506 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49522 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49536 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49562 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49582 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49608 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49634 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49652 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50530 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36514 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36534 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:36558 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53074 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43696 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40184 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59116 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49024 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49044 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49058 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43828 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43840 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43858 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43888 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43908 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43924 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43944 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43960 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43990 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44000 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44012 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44018 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44028 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44042 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44066 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44098 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44106 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44124 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:44144 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:47342 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50152 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50168 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50178 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50210 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50220 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50242 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50258 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50282 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50880 - "POST /translate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:40136 - "POST /translate HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [1645607]

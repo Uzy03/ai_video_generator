@@ -4,3 +4,4 @@ external/Wan2.1/Wan2.1-I2V-14B-720P/
 .DS_Store
 # New lightweight models and caches
 external/weights/
+API/nllb-200-distilled-600M

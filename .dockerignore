@@ -1,0 +1,34 @@
+# Pythonキャッシュ
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 仮想環境
+.venv/
+venv/
+ENV/
+
+# Git
+.git/
+.gitignore
+
+# ログ・一時ファイル
+*.log
+*.tmp
+*.swp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+
+# モデル・重み・データ
+external/weights/
+external/CogVideo
+external/SkyReels-V2
+external/Wan2.1
+API/nllb-200-distilled-600M/
+
+# その他
+*.bak
+*.old 

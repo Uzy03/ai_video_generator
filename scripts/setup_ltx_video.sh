@@ -27,14 +27,14 @@ if [ ! -d "LTX-Video-2B" ]; then
 fi
 
 # ---------- MLLB (NLLB) モデルのダウンロード ----------
-bash API/download_model.sh
+bash "$ROOT/API/download_model.sh"
 
 cd "$ROOT"
 
 # ---------- Python deps ----------
-pip install -r requirements.txt
+pip install -r "$ROOT/requirements.txt"
 # LTX-Videoの追加依存
-pip install -r external/LTX-Video/pyproject.toml || true
+pip install -r "$ROOT/external/LTX-Video/pyproject.toml" || true
 
 # 完了メッセージ
 echo "✅ LTX-Videoのみセットアップ完了。" 

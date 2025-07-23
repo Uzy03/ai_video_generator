@@ -13,7 +13,7 @@ RUN apt-get update && \
 WORKDIR /workspace/ai_video_generator
 
 # *** flash-attn を入れない ***
-COPY requirements.txt .
+COPY . /workspace/ai_video_generator
 RUN pip install --no-cache-dir -r requirements.txt
 # LTX-Video専用セットアップスクリプトを追加
 COPY scripts/setup_ltx_video.sh scripts/setup_ltx_video.sh

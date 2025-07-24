@@ -109,6 +109,10 @@ with col2:
 with st.sidebar:
     st.header("⚙️ Advanced settings")
 
+    # --- GPU選択 ---
+    gpu_options = ["0", "1"]
+    selected_gpu = st.selectbox("使用GPU (CUDA_VISIBLE_DEVICES)", gpu_options, index=0)
+
     if img_info_text:
         st.info(img_info_text)
 
@@ -274,12 +278,13 @@ if run_btn:
         st.code("$ " + " ".join(cmd), language="bash")
         with st.status("🖥️  Running model… this can take a few minutes."):
             if run_subprocess:
+                extra_env = {**os.environ, **extra_env, "CUDA_VISIBLE_DEVICES": selected_gpu}
                 proc = subprocess.run(
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    env={**os.environ, **extra_env},
+                    env=extra_env,
                 )
             else:
                 proc = None

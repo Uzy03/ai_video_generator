@@ -10,7 +10,7 @@ model_name = "facebook/nllb-200-distilled-600M"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
 # 日本語→英語に修正
-translator = pipeline("translation", model=model, tokenizer=tokenizer, src_lang="jpn_Jpan", tgt_lang="eng_Latn")
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-ja-en", device=-1)  # device=-1でCPU
 
 class TranslationRequest(BaseModel):
     text: str

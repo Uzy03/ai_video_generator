@@ -12,3 +12,7 @@ accelerate
 # torch>=2.0.1
 sentencepiece
 timm
+uvicorn
+fastapi
+imageio
+einops
